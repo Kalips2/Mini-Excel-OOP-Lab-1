@@ -18,5 +18,6 @@ public enum Token {
     MMAX,
     COMA,
     MMIN,
+    CELL,
     END_OF
 }

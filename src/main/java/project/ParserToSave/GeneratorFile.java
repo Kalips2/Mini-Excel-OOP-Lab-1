@@ -34,11 +34,11 @@ public class GeneratorFile {
         row = model.getROW_SIZE();
         column = model.getCOLUMN_SIZE();
         text = text + row + " " + column + '\n';
-        for(int i = 0; i < row; i++) {
-            for(int j = 0; j < column; j++) {
-                text+="\"" + model.getValueAt(i, j) + "\"," + "\"" + model.getExpressionAt(i, j) + "\"; ";
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < column; j++) {
+                text += "\"" + model.getValueAt(i, j) + "\"&" + "\"" + model.getExpressionAt(i, j) + "\"; ";
             }
-            text+="\n";
+            text += "\n";
         }
 
         br.write(text);
@@ -54,24 +54,31 @@ public class GeneratorFile {
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         int row, column;
         String text1 = bufferedReader.readLine();
-        row = Integer.parseInt(text1.split("\\s+")[0]);
-        column = Integer.parseInt(text1.split("\\s+")[1]);
-        MainModel newModel = new MainModel(row, column);
-        MyCell[][] newData = new MyCell[row][column];
-        StringBuilder text = new StringBuilder("");
-        for(int i = 0; i < row; i++) {
-            String[] values = bufferedReader.readLine().toString().split(";");
-            System.out.println(Arrays.toString(values));
-            for(int j = 0; j < column; j++) {
-                String f = values[j].split(",")[0].trim();
-                String s = values[j].split(",")[1].trim();
-                String first = f.equals("") ? "" : f.substring(1, f.length() - 1);
-                String second =s.equals("") ? "" : s.substring(1, s.length() - 1);
-                //System.out.println("   \'" + first + "\' " + "\'" + second + "\'");
-                newData[i][j] = new MyCell(i, j, first,second);
+        //TODO: неправильний файл перевірка!
+        try {
+            row = Integer.parseInt(text1.split("\\s+")[0]);
+            column = Integer.parseInt(text1.split("\\s+")[1]);
+            MainModel newModel = new MainModel(row, column);
+            MyCell[][] newData = new MyCell[row][column];
+            StringBuilder text = new StringBuilder("");
+            for (int i = 0; i < row; i++) {
+                String[] values = bufferedReader.readLine().toString().split(";");
+                System.out.println(Arrays.toString(values));
+                for (int j = 0; j < column; j++) {
+                    String f = values[j].split("&")[0].trim();
+                    String s = values[j].split("&")[1].trim();
+                    String first = f.equals("") ? "" : f.substring(1, f.length() - 1);
+                    String second = s.equals("") ? "" : s.substring(1, s.length() - 1);
+                    //System.out.println("   \'" + first + "\' " + "\'" + second + "\'");
+                    String name = (j / 26 < 1 ? "" : Character.valueOf((char) (j / 26 + 64)).toString()) + Character.valueOf((char) (j % 26 + 65)).toString() + (i + 1);
+                    newData[i][j] = new MyCell(i, j, first, second, name);
+                }
             }
+            newModel.setData(newData);
+            newModel.setPath(path);
+            return newModel;
+        } catch (Exception e) {
+            throw new RuntimeException("Неправильно заданий або побитиий файл! Не вдається відкрити..");
         }
-        newModel.setData(newData);
-        return newModel;
     }
 }

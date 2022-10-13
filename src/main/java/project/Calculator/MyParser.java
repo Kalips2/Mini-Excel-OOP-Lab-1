@@ -3,6 +3,7 @@ package project.Calculator;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
+import project.MyCell;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,13 +12,13 @@ import java.util.*;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Parser {
-
+public class MyParser {
+    MyCell[][] data;
     Lexer lexer;
 
     private double add_expr() throws Exception {
         double result = mul_expr();
-        //Process add_expr_tail
+
         for (; ; ) {
             switch (lexer.getCur_token()) {
                 case PLUS:
@@ -38,7 +39,6 @@ public class Parser {
         double result = pow_expr();
         double x;
 
-        // Process mul_expr_tail.
         for (; ; ) {
             switch (lexer.getCur_token()) {
                 case MUL:
@@ -48,13 +48,13 @@ public class Parser {
                 case DIV:
                     lexer.advance();
                     x = pow_expr();
-                    if (x == 0) throw new RuntimeException("attempt to divide by zero");
+                    if (x == 0) throw new RuntimeException("Не можна ділити на 0!");
                     result /= x;
                     break;
                 case MOD:
                     lexer.advance();
                     x = pow_expr();
-                    if (x == 0) throw new RuntimeException("attempt to divide by zero");
+                    if (x == 0) throw new RuntimeException("Не можна ділити на 0!");
                     result = result % x;
                     break;
                 default:
@@ -65,7 +65,7 @@ public class Parser {
 
     private double pow_expr() throws Exception {
         double result = primary();
-        // Process pow_expr_suffix.
+
         if (lexer.getCur_token() == Token.POW) {
             lexer.advance();
             double x = primary();
@@ -81,7 +81,7 @@ public class Parser {
         double e = Math.abs(y);
         if (e <= 0 || e >= 1) return 0;
 
-        throw new RuntimeException("attempt to take root of a negative number");
+        throw new RuntimeException("Не можливо пінести від'ємне число до степеня!");
     }
 
     private double primary() throws Exception {
@@ -95,7 +95,7 @@ public class Parser {
                 lexer.advance();
                 arg = add_expr();
                 if (lexer.getCur_token() != Token.RP)
-                    throw new RuntimeException("missing ) after subexpression");
+                    throw new RuntimeException("Пропущена права дужка!");
                 lexer.advance();
                 return arg;
             case SIN:
@@ -105,24 +105,41 @@ public class Parser {
             case SQRT:
                 arg = get_argument();
                 if (arg < 0)
-                    throw new RuntimeException("attempt to take square root of negative number");
+                    throw new RuntimeException("Не можливо взяти корінь від від'ємного числа!");
                 return Math.sqrt(arg);
             case INC:
-                return (get_argument() + 1);
+                return (get_argument() + 1.0);
             case DEC:
-                return (get_argument() - 1);
+                return (get_argument() - 1.0);
             case MMAX:
                 return get_mmax();
             case MMIN:
                 return get_mmin();
+            case CELL:
+                return getValueFromCell();
             default:
-                throw new RuntimeException("invalid primary expression");
+                throw new RuntimeException("Перевірте правильність написання операцій або функцій!");
         }
     }
+
+    private double getValueFromCell() throws Exception {
+        String buffer = lexer.getBuffer();
+        double value = 0;
+        for(int i = 0; i < data.length; i++) {
+            for(int j = 0; j < data[0].length;j++) {
+                if(data[i][j].getName().equals(buffer)) {
+                    value = Double.parseDouble((data[i][j].getValue().equals("") || data[i][j].getValue().equals("0.0")) ? "0" : data[i][j].getValue());
+                }
+            }
+        }
+        lexer.advance();
+        return value;
+    }
+
     private double get_mmax() throws Exception {
         lexer.advance();
         if (lexer.getCur_token() != Token.LP)
-            throw new RuntimeException("missing ( after function name");
+            throw new RuntimeException("Пропустили ( після назви функції!");
         lexer.advance();
         ArrayList<Double> helperArray = new ArrayList<>();
         double arg = add_expr();
@@ -133,7 +150,7 @@ public class Parser {
             helperArray.add(arg);
         }
         if ((lexer.getCur_token() != Token.RP))
-            throw new RuntimeException("missing ) after function argument");
+            throw new RuntimeException("Пропустили ) після аргументів функції!");
         lexer.advance();
         double maximum;
         return helperArray.stream()
@@ -144,7 +161,7 @@ public class Parser {
     private double get_mmin() throws Exception {
         lexer.advance();
         if (lexer.getCur_token() != Token.LP)
-            throw new RuntimeException("missing ( after function name");
+            throw new RuntimeException("Пропустили ( після назви функції!");
         lexer.advance();
         ArrayList<Double> helperArray = new ArrayList<>();
         double arg = add_expr();
@@ -155,7 +172,7 @@ public class Parser {
             helperArray.add(arg);
         }
         if ((lexer.getCur_token() != Token.RP))
-            throw new RuntimeException("missing ) after function argument");
+            throw new RuntimeException("Пропустили ) після аргументів функції!");
         lexer.advance();
         double maximum;
         return helperArray.stream()
@@ -167,25 +184,25 @@ public class Parser {
     private double get_argument() throws Exception {
         lexer.advance();    // Toss the function name. We already know it.
         if (lexer.getCur_token() != Token.LP)
-            throw new RuntimeException("missing ( after function name");
+            throw new RuntimeException("Пропустили ( після назви функції!");
         lexer.advance();
         double arg = add_expr();
         if (lexer.getCur_token() != Token.RP)
-            throw new RuntimeException("missing ) after function argument");
+            throw new RuntimeException("Пропустили ) після аргументів функції!");
         lexer.advance();
         return arg;
     }
 
-    public double Calculate(String s) throws Exception {
-        lexer = new Lexer(s);
+    public double Calculate(String s, MyCell[][] data, MyCell currentCell) throws Exception {
+        this.data = data;
+        lexer = new Lexer(s, data, currentCell);
         return add_expr();
     }
 
-    Parser() {
+    public MyParser() {
     }
 
     private double to_number(String s) {
-        System.out.println("IN TO NUMBER: " + (Double.parseDouble(s)));
         return Double.parseDouble(s);
     }
 
@@ -193,19 +210,6 @@ public class Parser {
         return s.toString();
     }
 
-    public static void main(String[] args) throws IOException {
-        String s;
-        Parser parser = new Parser();
-        System.out.print("Enter a expression: ");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        s = reader.readLine();
-        try {
-            System.out.println(parser.Calculate(s));
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
-    }
 }
 
 

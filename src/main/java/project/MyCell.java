@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,24 +20,24 @@ public class MyCell{
     String expression;
     int row;
     int column;
-    ArrayList<MyCell> listeners;
-    ArrayList<MyCell> references;
+    String name;
+    public List<MyCell> IDependedFrom; //A3 = A2 + A5
+    public List<MyCell> DependedCells;
 
     MyCell(int row, int column) {
         value = "";
         expression = "";
         this.row = row;
         this.column = column;
-        listeners = new ArrayList<>();
-        references = new ArrayList<>();
     }
-    public MyCell(int row, int column, String value, String expression) {
+    public MyCell(int row, int column, String value, String expression, String name) {
+        this.name = name;
         this.value = value;
         this.expression = expression;
         this.row = row;
         this.column = column;
-        listeners = new ArrayList<>();
-        references = new ArrayList<>();
+        IDependedFrom = new ArrayList<>();
+        DependedCells = new ArrayList<>();
     }
 
 }
