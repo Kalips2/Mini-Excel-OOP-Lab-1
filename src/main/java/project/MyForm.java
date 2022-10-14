@@ -21,21 +21,21 @@ import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MyForm extends JFrame {
-    int ROW_SIZE = 10;
-    int COLUMN_SIZE = 10;
+    int rowSize = 10;
+    int columnSize = 10;
     JPanel panel1;
     JButton button1;
     JPanel panel2;
     JButton button2;
     JButton button3;
     JButton button4;
-    JTextField textField1;
-    JTable table1;
+    JTextField textField;
+    JTable mainTable;
     JButton button5;
-    JScrollPane scrollPane1;
-    JLabel label;
+    JScrollPane scrollPane;
+    JLabel formulaLabel;
     JTable headerTable;
-    MainModel model;
+    MainModel mainModel;
     HeaderModel headerModel;
     JMenuBar menuBar;
     GeneratorFile generatorFile;
@@ -85,7 +85,7 @@ public class MyForm extends JFrame {
         newItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                newMenu();
+                newItemSetUp();
             }
         });
         fileMenu.add(newItem);
@@ -95,10 +95,8 @@ public class MyForm extends JFrame {
         saveAgainItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println(model.getPath());
-                if (model.getPath().length() >= 1) {
-                    saveFile(false);
-                } else saveFile(true);
+                System.out.println(mainModel.getPath());
+                saveFile(mainModel.getPath().length() < 1);
 
             }
         });
@@ -172,13 +170,13 @@ public class MyForm extends JFrame {
                 String path = fc.getSelectedFile().getPath();
                 try {
                     MainModel newModel = GeneratorFile.createTableFromText(path);
-                    int x = newModel.getROW_SIZE() - ROW_SIZE;
-                    ROW_SIZE = newModel.getROW_SIZE();
-                    COLUMN_SIZE = newModel.getCOLUMN_SIZE();
-                    model.setROW_SIZE(ROW_SIZE);
-                    model.setCOLUMN_SIZE(COLUMN_SIZE);
-                    model.setData(newModel.getData());
-                    model.setPath(newModel.getPath());
+                    int x = newModel.getROW_SIZE() - rowSize;
+                    rowSize = newModel.getROW_SIZE();
+                    columnSize = newModel.getCOLUMN_SIZE();
+                    mainModel.setROW_SIZE(rowSize);
+                    mainModel.setCOLUMN_SIZE(columnSize);
+                    mainModel.setData(newModel.getData());
+                    mainModel.setPath(newModel.getPath());
                     //Add/Remove header Rows:
                     if (x > 0) {
                         int k = 0;
@@ -198,12 +196,12 @@ public class MyForm extends JFrame {
                     JOptionPane.showMessageDialog(
                             this, "Error in opening file!");
                 }
-                model.fireTableStructureChanged();
+                mainModel.fireTableStructureChanged();
             }
         }
     }
 
-    private void newMenu() {
+    private void newItemSetUp() {
         int n = JOptionPane.showConfirmDialog(
                 this,
                 "Ви хочете зберігти цю таблицю?",
@@ -226,7 +224,6 @@ public class MyForm extends JFrame {
                 "Ви хочете зберігти цю таблицю?",
                 "Mini-Excel",
                 JOptionPane.YES_NO_CANCEL_OPTION);
-        //System.out.println("" + n);
 
         if (n == 0) saveFile(false);
         if (n == 0 || n == 1) this.dispose();
@@ -234,8 +231,8 @@ public class MyForm extends JFrame {
 
     private boolean saveFile(boolean saveAgain) {
         String path;
-        System.out.println(model.getPath().length());
-        if (model.getPath().length() <= 1 || saveAgain) {
+        System.out.println(mainModel.getPath().length());
+        if (mainModel.getPath().length() <= 1 || saveAgain) {
             final JFileChooser fc = new JFileChooser();
             int saved;
             fc.setAcceptAllFileFilterUsed(false);
@@ -256,24 +253,24 @@ public class MyForm extends JFrame {
                 return false;
             }
             path = fc.getSelectedFile().toString();
-            model.setPath(path);
+            mainModel.setPath(path);
             System.out.println(path + "NEW PATH");
         } else {
-            path = model.getPath();
+            path = mainModel.getPath();
         }
 
         if (!path.endsWith(".txt")) {
             path += ".txt";
         }
         System.out.println("Path to save file:" + path);
-        generatorFile = new GeneratorFile(model, path);
+        generatorFile = new GeneratorFile(mainModel, path);
         try {
-            generatorFile.createTableHowText(model, path);
+            generatorFile.createTableHowText(mainModel, path);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(
                     this, "Error in saving file!");
         }
-        model.setSaved(true);
+        mainModel.setSaved(true);
         return true;
     }
 
@@ -283,48 +280,43 @@ public class MyForm extends JFrame {
     }
 
     private void textFieldSetUp() {
-        textField1 = new JTextField();
-        textField1.setText("Виберіть комірку: ");
-        textField1.setEditable(false);
-        textField1.addActionListener(new ActionListener() {
+        textField = new JTextField();
+        textField.setText("Виберіть комірку: ");
+        textField.setEditable(false);
+        textField.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                //System.out.println("=======================================================");
                 int row, column;
-                row = table1.getSelectedRow();
-                column = table1.getSelectedColumn();
-                String s = textField1.getText();
-                MyCell currentCell = model.getData()[row][column];
+                row = mainTable.getSelectedRow();
+                column = mainTable.getSelectedColumn();
+                String s = textField.getText();
+                MyCell currentCell = mainModel.getData()[row][column];
                 String expBefore = currentCell.getExpression();
                 String valueBefore = currentCell.getValue();
                 List<MyCell> DependedFromMeBefore = new ArrayList<>(currentCell.getDependedCells());
-                List<MyCell> IDependedFromBefore = new ArrayList<>(currentCell.getIDependedFrom());
-
-                if(currentCell.getName().equals("D1")) {
-
-                }
+                List<MyCell> IDependedFromBefore = new ArrayList<>(currentCell.getMyDependens());
 
                 try {
                     if (checkTextIsPrimary(s)) {
-                        model.setExpressionAt(s.trim(), row, column);
-                        model.fireTableDataChanged();
+                        mainModel.setExpressionAt(s.trim(), row, column);
+                        mainModel.fireTableDataChanged();
                         setVisibleCell(row, column);
                     } else {
                         try {
                             for (var i : IDependedFromBefore) {
                                 i.getDependedCells().remove(currentCell);
                             }
-                            currentCell.setIDependedFrom(new ArrayList<>());
+                            currentCell.setMyDependens(new ArrayList<>());
                             currentCell.setExpression(s);
-                            model.setExpressionAt(s, row, column);
+                            mainModel.setExpressionAt(s, row, column);
                             setVisibleCell(row, column);
                         } catch (Exception ex) {
                             currentCell.setExpression(expBefore);
                             currentCell.setValue(valueBefore);
                             currentCell.setDependedCells(DependedFromMeBefore);
-                            currentCell.setIDependedFrom(IDependedFromBefore);
+                            currentCell.setMyDependens(IDependedFromBefore);
                             showOptionPane(ex.getMessage());
                         }
                     }
@@ -332,7 +324,7 @@ public class MyForm extends JFrame {
                     currentCell.setExpression(expBefore);
                     currentCell.setValue(valueBefore);
                     currentCell.DependedCells = DependedFromMeBefore;
-                    currentCell.setIDependedFrom(IDependedFromBefore);
+                    currentCell.setMyDependens(IDependedFromBefore);
                     showOptionPane(ex.getMessage());
                 }
             }
@@ -360,15 +352,15 @@ public class MyForm extends JFrame {
                     }
                 }
             }
-            if (i != s.length()) throw new RuntimeException("Без \'=\' можна вводити тільки числа! Перевірте написане");
+            if (i != s.length()) throw new RuntimeException("Без '=' можна вводити тільки числа! Перевірте написане");
         }
         return i == s.length();
     }
 
     private void setVisibleCell(int row, int column) {
-        if (column <= COLUMN_SIZE && column != -1) {
-            table1.setRowSelectionInterval(row, row);
-            table1.setColumnSelectionInterval(column, column);
+        if (column <= columnSize && column != -1) {
+            mainTable.setRowSelectionInterval(row, row);
+            mainTable.setColumnSelectionInterval(column, column);
         }
     }
 
@@ -382,7 +374,7 @@ public class MyForm extends JFrame {
 
 
     private void labelSetUp() {
-        label = new JLabel();
+        formulaLabel = new JLabel();
     }
 
     private void b5SetUp() {
@@ -451,17 +443,17 @@ public class MyForm extends JFrame {
 
     private void deleteRowAtTable() {
         //For main and header table:
-        if (!(ROW_SIZE <= 1)) {
+        if (!(rowSize <= 1)) {
             int row, column;
-            row = table1.getSelectedRow();
-            column = table1.getSelectedColumn();
+            row = mainTable.getSelectedRow();
+            column = mainTable.getSelectedColumn();
             if (checkCanWeDeleteRow()) {
-                ROW_SIZE--;
-                model.removeRow();
+                rowSize--;
+                mainModel.removeRow();
                 headerModel.removeRow();
-                if (row == ROW_SIZE) {
-                    table1.setRowSelectionInterval(row - 1, row - 1);
-                    table1.setColumnSelectionInterval(column, column);
+                if (row == rowSize) {
+                    mainTable.setRowSelectionInterval(row - 1, row - 1);
+                    mainTable.setColumnSelectionInterval(column, column);
                 }
             } else
                 throw new RuntimeException("Від клітинок цієї строки залежать інші! Видаліть залежності, щоб прибрати строку!");
@@ -469,77 +461,77 @@ public class MyForm extends JFrame {
     }
 
     private boolean checkCanWeDeleteColumn() {
-        for (int i = 0; i < model.getData().length; i++) {
+        for (int i = 0; i < mainModel.getData().length; i++) {
             //System.out.print(model.getData()[i][COLUMN_SIZE - 1].getDependedCells().size() + " ");
-            if (model.getData()[i][COLUMN_SIZE - 1].getDependedCells().size() != 0) return false;
+            if (mainModel.getData()[i][columnSize - 1].getDependedCells().size() != 0) return false;
         }
         return true;
     }
 
     private boolean checkCanWeDeleteRow() {
-        for (int i = 0; i < model.getData()[0].length; i++) {
+        for (int i = 0; i < mainModel.getData()[0].length; i++) {
             //System.out.print(model.getData()[ROW_SIZE - 1][i].getDependedCells().size() + " ");
-            if (model.getData()[ROW_SIZE - 1][i].getDependedCells().size() != 0) return false;
+            if (mainModel.getData()[rowSize - 1][i].getDependedCells().size() != 0) return false;
         }
         return true;
     }
 
     private void scrollSetUp() {
-        scrollPane1 = new JScrollPane(table1);
-        scrollPane1.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane = new JScrollPane(mainTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         createHeaderTable();
-        scrollPane1.setRowHeaderView(headerTable);
+        scrollPane.setRowHeaderView(headerTable);
     }
 
     private void tableSetUp() {
-        model = new MainModel(ROW_SIZE, COLUMN_SIZE);
-        table1 = new JTable(model);
-        table1.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        table1.getTableHeader().setReorderingAllowed(false);
-        table1.setRowSelectionAllowed(false);
-        table1.setColumnSelectionAllowed(false);
-        table1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table1.setDefaultRenderer(Object.class, new MyCellModel(textField1));
+        mainModel = new MainModel(rowSize, columnSize);
+        mainTable = new JTable(mainModel);
+        mainTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        mainTable.getTableHeader().setReorderingAllowed(false);
+        mainTable.setRowSelectionAllowed(false);
+        mainTable.setColumnSelectionAllowed(false);
+        mainTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        mainTable.setDefaultRenderer(Object.class, new MyCellModel(textField));
         ListSelectionListener selectionChanged = new ListSelectionListener() {
 
             public void valueChanged(ListSelectionEvent e) {
-                textField1.setEditable(true);
+                textField.setEditable(true);
                 if (e.getValueIsAdjusting()) {
                     return;
                 }
                 int row, column;
-                row = table1.getSelectedRow();
-                column = table1.getSelectedColumn();
+                row = mainTable.getSelectedRow();
+                column = mainTable.getSelectedColumn();
                 String add = (column / 26 < 1 ? "" : Character.valueOf((char) (column / 26 + 64)).toString()) + Character.valueOf((char) (column % 26 + 65)).toString() + (row + 1);
                 if (add.equals("@0")) add = "";
-                label.setText("Формула в: " + add + " ");
+                formulaLabel.setText("Формула в: " + add + " ");
 
-                if (!(row == -1) && !(column == -1)) textField1.setText(model.getExpressionAt(row, column));
+                if (!(row == -1) && !(column == -1)) textField.setText(mainModel.getExpressionAt(row, column));
                 else {
-                    textField1.setText("Виберіть комірку: ");
-                    textField1.setEditable(false);
+                    textField.setText("Виберіть комірку: ");
+                    textField.setEditable(false);
                 }
             }
         };
-        table1.getColumnModel().getSelectionModel().addListSelectionListener(selectionChanged);
-        table1.getSelectionModel().addListSelectionListener(selectionChanged);
+        mainTable.getColumnModel().getSelectionModel().addListSelectionListener(selectionChanged);
+        mainTable.getSelectionModel().addListSelectionListener(selectionChanged);
     }
 
     private void deleteColumnAtTable() {
         //For main table:
-        if (!(COLUMN_SIZE <= 1)) {
+        if (!(columnSize <= 1)) {
             int row, column;
-            row = table1.getSelectedRow();
-            column = table1.getSelectedColumn();
+            row = mainTable.getSelectedRow();
+            column = mainTable.getSelectedColumn();
             if (checkCanWeDeleteColumn()) {
-                COLUMN_SIZE--;
-                model.removeColumn();
-                if (column == COLUMN_SIZE) {
-                    table1.setRowSelectionInterval(row, row);
-                    table1.setColumnSelectionInterval(column - 1, column - 1);
+                columnSize--;
+                mainModel.removeColumn();
+                if (column == columnSize) {
+                    mainTable.setRowSelectionInterval(row, row);
+                    mainTable.setColumnSelectionInterval(column - 1, column - 1);
                 } else if (!(row == -1)) {
-                    table1.setRowSelectionInterval(row, row);
-                    table1.setColumnSelectionInterval(column, column);
+                    mainTable.setRowSelectionInterval(row, row);
+                    mainTable.setColumnSelectionInterval(column, column);
                 }
             } else {
                 throw new RuntimeException("Від клітинок цього стовпця залежать інші! Видаліть залежності, щоб прибрати стовпець!");
@@ -549,14 +541,14 @@ public class MyForm extends JFrame {
 
     private void addColumnAtTable() {
         //For main table:
-        COLUMN_SIZE++;
+        columnSize++;
         int row, column;
-        row = table1.getSelectedRow();
-        column = table1.getSelectedColumn();
-        model.addColumn("NEW");
+        row = mainTable.getSelectedRow();
+        column = mainTable.getSelectedColumn();
+        mainModel.addColumn("NEW");
         if (!(row == -1)) {
-            table1.setRowSelectionInterval(row, row);
-            table1.setColumnSelectionInterval(column, column);
+            mainTable.setRowSelectionInterval(row, row);
+            mainTable.setColumnSelectionInterval(column, column);
         }
 
 
@@ -565,33 +557,33 @@ public class MyForm extends JFrame {
     private void addRowAtTable() {
         //For main table:
 
-        ROW_SIZE++;
-        MyCell[] newRow1 = new MyCell[COLUMN_SIZE];
-        for (int i = 0; i < COLUMN_SIZE; i++) {
-            String name = (i / 26 < 1 ? "" : Character.valueOf((char) (i / 26 + 64)).toString()) + Character.valueOf((char) (i % 26 + 65)).toString() + (ROW_SIZE);
-            newRow1[i] = new MyCell(ROW_SIZE - 1, i, "", "", name);
+        rowSize++;
+        MyCell[] newRow1 = new MyCell[columnSize];
+        for (int i = 0; i < columnSize; i++) {
+            String name = (i / 26 < 1 ? "" : Character.valueOf((char) (i / 26 + 64)).toString()) + Character.valueOf((char) (i % 26 + 65)).toString() + (rowSize);
+            newRow1[i] = new MyCell(rowSize - 1, i, "", "", name);
         }
-        model.addRow(newRow1);
+        mainModel.addRow(newRow1);
 
         //For Header Table:
         int[] newRow2 = new int[1];
-        newRow2[0] = ROW_SIZE;
+        newRow2[0] = rowSize;
         headerModel.addRow();
 
 
     }
 
     private void createHeaderTable() {
-        headerModel = new HeaderModel(ROW_SIZE, 0);
+        headerModel = new HeaderModel(rowSize, 0);
         headerTable = new JTable(headerModel);
         headerTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         headerTable.getColumnModel().getColumn(0).setPreferredWidth(30);
         headerTable.setPreferredScrollableViewportSize(new Dimension(30, 0));
-        headerTable.setBackground(table1.getTableHeader().getBackground());
+        headerTable.setBackground(mainTable.getTableHeader().getBackground());
         headerTable.setFocusable(false);
         headerTable.setRowSelectionAllowed(false);
         headerTable.setColumnSelectionAllowed(false);
-        model.fireTableRowsUpdated(model.getRowCount() - 1, model.getRowCount() - 1);
+        mainModel.fireTableRowsUpdated(mainModel.getRowCount() - 1, mainModel.getRowCount() - 1);
     }
 
     @SneakyThrows

@@ -54,7 +54,6 @@ public class GeneratorFile {
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         int row, column;
         String text1 = bufferedReader.readLine();
-        //TODO: неправильний файл перевірка!
         try {
             row = Integer.parseInt(text1.split("\\s+")[0]);
             column = Integer.parseInt(text1.split("\\s+")[1]);
