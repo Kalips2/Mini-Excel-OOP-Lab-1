@@ -82,10 +82,8 @@ public class MainModel extends DefaultTableModel {
             calculateAndSetUp(aValue, rowIndex, columnIndex);
         } else {
             int k = 0;
-            //System.out.println(currentCell.getName() + " depended on me = " + currentCell.getDependedCells().size());
+            calculateAndSetUp(aValue, rowIndex, columnIndex);
             while (data[rowIndex][columnIndex].DependedCells.size() != k) {
-                calculateAndSetUp(aValue, rowIndex, columnIndex);
-                //System.out.println("FROM WHILE  " + data[rowIndex][columnIndex].DependedCells.size());
                 for (int i = 0; i < currentCell.DependedCells.size(); i++) {
                     setExpressionAt(currentCell.DependedCells.get(i).getExpression(), currentCell.DependedCells.get(i).getRow(), currentCell.DependedCells.get(i).getColumn());
                 }
@@ -98,23 +96,13 @@ public class MainModel extends DefaultTableModel {
     }
 
     private void calculateAndSetUp(Object aValue, int rowIndex, int columnIndex) throws Exception {
+
         String text = aValue.toString();
         if (text.length() > 1 && text.charAt(0) == '=') text = text.substring(1);
         double value = parser.Calculate(text, data, data[rowIndex][columnIndex]);
         String newValue = String.valueOf(value);
         data[rowIndex][columnIndex].setExpression(aValue.toString());
         data[rowIndex][columnIndex].setValue(newValue);
-    }
-
-    private boolean checkToRecursion(MyCell Current, MyCell Initial) {
-        if (Current.IDependedFrom.contains(Initial)) {
-            return true;
-        }
-        for (var x : Current.IDependedFrom) {
-            if (checkToRecursion(x, Initial))
-                return true;
-        }
-        return false;
     }
 
     @Override
@@ -128,7 +116,6 @@ public class MainModel extends DefaultTableModel {
         for (int i = 0; i < getCOLUMN_SIZE(); i++) {
             newData[getROW_SIZE()][i] = (MyCell) rowData[i];
         }
-
         data = newData;
         setROW_SIZE(getROW_SIZE() + 1);
 
@@ -138,7 +125,6 @@ public class MainModel extends DefaultTableModel {
     @Override
     public void addColumn(Object columnName) {
 
-        //System.out.println(getROW_SIZE() + " " + getCOLUMN_SIZE());
         MyCell[][] newData = new MyCell[getROW_SIZE()][getCOLUMN_SIZE() + 1];
         for (int i = 0; i < getROW_SIZE(); i++) {
             for (int j = 0; j < getCOLUMN_SIZE(); j++) {

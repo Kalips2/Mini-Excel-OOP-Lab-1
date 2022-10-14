@@ -99,7 +99,6 @@ public class Lexer {
                     i++;
                 }
             }
-            //System.out.println(buffer);
             return Token.NUMBER;
         }
         buffer = String.valueOf(p_input.charAt(i));
@@ -140,7 +139,6 @@ public class Lexer {
         this.data = data;
         this.p_input = p_input.trim();
         len = this.p_input.length();
-        //System.out.println("Lexema is - " + p_input);
         canDeleteP = false;
         cur_token = get_token();
         cur_token_text = buffer;

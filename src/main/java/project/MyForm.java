@@ -302,15 +302,12 @@ public class MyForm extends JFrame {
                 List<MyCell> DependedFromMeBefore = new ArrayList<>(currentCell.getDependedCells());
                 List<MyCell> IDependedFromBefore = new ArrayList<>(currentCell.getIDependedFrom());
 
+                if(currentCell.getName().equals("D1")) {
+
+                }
+
                 try {
                     if (checkTextIsPrimary(s)) {
-//                        if (s.isEmpty()) {
-//                            currentCell.setValue("");
-//                            model.setExpressionAt("", row, column);
-//                        } else {
-//                            currentCell.setValue(Double.parseDouble(s) + "");
-//                            model.setExpressionAt(s, row, column);
-//                        }
                         currentCell.setValue(String.valueOf(Double.parseDouble(s.trim().isEmpty() ? "0" : s.trim())));
                         currentCell.setExpression(s.trim());
                         model.fireTableDataChanged();
@@ -573,7 +570,7 @@ public class MyForm extends JFrame {
         MyCell[] newRow1 = new MyCell[COLUMN_SIZE];
         for (int i = 0; i < COLUMN_SIZE; i++) {
             String name = (i / 26 < 1 ? "" : Character.valueOf((char) (i / 26 + 64)).toString()) + Character.valueOf((char) (i % 26 + 65)).toString() + (ROW_SIZE);
-            newRow1[i] = new MyCell(ROW_SIZE - 2, i, "", "", name);
+            newRow1[i] = new MyCell(ROW_SIZE - 1, i, "", "", name);
         }
         model.addRow(newRow1);
 
