@@ -308,8 +308,7 @@ public class MyForm extends JFrame {
 
                 try {
                     if (checkTextIsPrimary(s)) {
-                        currentCell.setValue(String.valueOf(Double.parseDouble(s.trim().isEmpty() ? "0" : s.trim())));
-                        currentCell.setExpression(s.trim());
+                        model.setExpressionAt(s.trim(), row, column);
                         model.fireTableDataChanged();
                         setVisibleCell(row, column);
                     } else {
